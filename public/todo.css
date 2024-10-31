@@ -1,0 +1,77 @@
+/* styles.css */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 600px;
+  margin: 50px auto;
+  padding: 20px;
+  background: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  text-align: center;
+}
+
+.task-form, .task-search {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.task-form input, .task-search input, .task-search select {
+  flex: 1;
+  margin-right: 10px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.task-form button {
+  padding: 10px 20px;
+  border: none;
+  background: #28a745;
+  color: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.task-form button:hover {
+  background: #218838;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+}
+
+li.completed {
+  text-decoration: line-through;
+  color: #888;
+}
+
+li button {
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+li button.edit {
+  color: #007bff;
+}
+
+li button.delete {
+  color: #dc3545;
+}

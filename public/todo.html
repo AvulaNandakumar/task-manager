@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Manager</title>
+  <link rel="stylesheet" href="/todo.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>Task Manager</h1>
+    <div class="task-form">
+      <input type="text" id="task-title" placeholder="Title" required>
+      <input type="text" id="task-desc" placeholder="Description" required>
+      <input type="date" id="task-due" required>
+      <button id="addTaskBtn">Add Task</button>
+    </div>
+    <div class="task-search">
+      <input type="text" id="search" placeholder="Search tasks..." oninput="filterTasks()">
+      <select id="filter" onchange="filterTasks()">
+        <option value="all">All</option>
+        <option value="completed">Completed</option>
+        <option value="incomplete">Incomplete</option>
+      </select>
+    </div>
+    <ul id="task-list"></ul>
+  </div>
+  <script type="text/javascript" src="/todo.js"></script>
+</body>
+
+</html>
