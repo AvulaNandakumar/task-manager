@@ -2,6 +2,9 @@ let addTaskBtn = document.getElementById("addTaskBtn");
 const title = document.getElementById('task-title');
 const description = document.getElementById('task-desc');
 const dueDate = document.getElementById('task-due');
+const titleRequired = document.getElementById("title_required");
+const dateRequired = document.getElementById("date_required");
+
 
 let token = null;
 
@@ -16,6 +19,7 @@ getToken();
 
 //add task to database
 const addTask = async () => {
+
   let options = {
     method: "POST",
     headers: {
@@ -40,7 +44,25 @@ const addTask = async () => {
 
 }
 
-addTaskBtn.addEventListener("click", addTask);
+addTaskBtn.addEventListener("click", () => {
+
+  if (title.value === "") {
+    titleRequired.classList.add("display");
+  }
+  else {
+    titleRequired.classList.remove("display");
+  }
+
+  if (dueDate.value === "") {
+    dateRequired.classList.add("display");
+  }
+  else {
+    dateRequired.classList.remove("display");
+  }
+  if (title.value && dueDate.value !== "") {
+    addTask();
+  }
+});
 
 
 //render tasks from db
@@ -72,14 +94,11 @@ function createTask(tasks) {
   taskList.innerHTML = '';
   tasks.forEach(task => {
     const li = document.createElement('li');
-
     if (task.status === "true") {
-
       status_text = "Completed";
       li.className = task.status ? 'completed' : '';
     }
     else {
-
       status_text = "Incomplete";
     }
     li.innerHTML = `
@@ -93,7 +112,6 @@ function createTask(tasks) {
     taskList.appendChild(li);
   });
 }
-
 
 
 let db_status_value = "false";
@@ -119,13 +137,10 @@ const status_change_in_db = async (id) => {
     body: JSON.stringify({ status: `${db_status_value}` }),
   });
   let jsondata = await response.json();
-
-
 }
 
 //status change
 function statusChange(id) {
-
   status_change_in_db(id);
   renderTasks();
 }
@@ -188,7 +203,6 @@ const deletetask_from_db = async (id) => {
     headers: {
       authorization: token,
     },
-    body: JSON.stringify({ id: `${task_id}` }),
   })
   let jsondata = await response.json();
   console.log(jsondata);
@@ -234,12 +248,11 @@ function filterTasks() {
   }
 }
 
-filterTasks();
 
 
-const search = document.getElementById('search');
 //task serach
-const  search_task=async()=>{
+const search = document.getElementById('search');
+const search_task = async () => {
 
   let response = await fetch(`/title/${search.value}`, {
     method: "GET",
@@ -255,6 +268,6 @@ const  search_task=async()=>{
 
 }
 
-search.addEventListener("keyup",()=>{
+search.addEventListener("keyup", () => {
   search_task();
 });

@@ -18,18 +18,26 @@ h1 {
   text-align: center;
 }
 
-.task-form, .task-search {
+.task-form,
+.task-search {
   display: flex;
   justify-content: space-between;
   margin-bottom: 20px;
 }
 
-.task-form input, .task-search input, .task-search select {
+.task-form input,
+.task-search input,
+.filter {
   flex: 1;
   margin-right: 10px;
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
+  height: 35px;
+
+}
+.filter{
+  height: 57px;
 }
 
 .task-form button {
@@ -74,4 +82,39 @@ li button.edit {
 
 li button.delete {
   color: #dc3545;
+}
+
+.title_required,
+.date_required {
+  display: none;
+  color: red;
+  font-size: 12px;
+  margin: 0px;
+}
+
+.display{
+  display: block;
+}
+
+@media(max-width:750px){
+  .container{
+    width: 100%;
+  }
+  .task-form{
+    flex-direction: column;
+  }
+  .task-form input{
+    margin: 5px 0px;
+    width: 95%;
+
+  }
+  .container{
+   
+    margin: 0px;
+  }
+}
+@media(max-width:280px){
+.task-search{
+  flex-direction: column;
+}
 }

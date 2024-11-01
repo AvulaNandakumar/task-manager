@@ -60,6 +60,7 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public/login.html"));
 });
 
+
 //login validation
 app.post("/login", async (req, res) => {
     const { user_name, user_password } = req.body;

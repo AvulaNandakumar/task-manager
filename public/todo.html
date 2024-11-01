@@ -12,14 +12,20 @@
   <div class="container">
     <h1>Task Manager</h1>
     <div class="task-form">
+      <div>
       <input type="text" id="task-title" placeholder="Title" required>
+      <p id="title_required" class="title_required">*required</p>
+    </div>
       <input type="text" id="task-desc" placeholder="Description" required>
+      <div>
       <input type="date" id="task-due" required>
+      <p id="date_required" class="date_required">*required</p>
+    </div>
       <button id="addTaskBtn">Add Task</button>
     </div>
     <div class="task-search">
-      <input type="text" id="search" placeholder="Search tasks..." oninput="filterTasks()">
-      <select id="filter" onchange="filterTasks()">
+      <input type="text" id="search" placeholder="Search tasks...">
+      <select id="filter" class="filter" onchange="filterTasks()">
         <option value="all">All</option>
         <option value="completed">Completed</option>
         <option value="incomplete">Incomplete</option>
