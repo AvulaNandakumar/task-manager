@@ -1,21 +1,30 @@
 const express = require("express");
 const path = require("path");
 const app = express();
-const initializingDB = require("./db_connection");
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-
+const cookieParser = require("cookie-parser");
+const sqlite3 = require("sqlite3");
+const { open } = require("sqlite");
+app.use(cookieParser());
 let db = null;
+
+const jwt = require("jsonwebtoken");
+const { stat } = require("fs");
 
 const initializingDBAndServer = async () => {
 
     try {
 
-        db = await initializingDB();
+        db = await open({
+            filename: path.join(__dirname, "./todo.db"),
+            driver: sqlite3.Database
+        });
+
 
         app.listen(3000, () => {
             console.log("Server is running");
         });
+
 
     }
 
@@ -28,14 +37,18 @@ const initializingDBAndServer = async () => {
 
 initializingDBAndServer();
 
+
+
+
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-
 //jwt token validation middleware
+
 const validation_middleware = (req, res, next) => {
 
-    let user_jwt_token = req.headers["authorization"];
+    let user_jwt_token = req.cookies["jwt_token"];
 
     if (user_jwt_token !== undefined) {
 
@@ -44,6 +57,9 @@ const validation_middleware = (req, res, next) => {
                 res.status(401).send({ message: "Invalid jwt Token" });
             }
             else {
+                req.user_name = payload["username"];
+                req.id = payload["id"];
+                req.role=payload["role"];
                 next();
             }
 
@@ -60,14 +76,26 @@ app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname, "public/login.html"));
 });
 
+//register
+app.post("/register", async (req, res) => {
+    const { name, password, role } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    let query_1 = `INSERT INTO users(name,password,role) VALUES(?,?,?)`;
+    db.run(query_1, [name, hashedPassword, role]);
+    res.status(201).send("created")
+}
+)
+
+
 
 //login validation
 app.post("/login", async (req, res) => {
     const { user_name, user_password } = req.body;
-    const query = `SELECT * FROM login WHERE name LIKE "${user_name}"`;
-    const db_user = await db.get(query);
+    const query = `SELECT * FROM users WHERE name LIKE ?`;
+    let db_user = await db.get(query, [user_name]);
 
     if (db_user === undefined) {
+
 
         res.status(400);
         res.send({ message: "invalid user_name" });
@@ -77,11 +105,15 @@ app.post("/login", async (req, res) => {
         let is_valid = await bcrypt.compare(user_password, db_user.password);
 
         if (is_valid) {
-            const payload = { username: user_name, }
+            const payload = { id: db_user.id, username: user_name, role:db_user.role}
             const jwtToken = jwt.sign(payload, "MY_SECRET_TOKEN");
-            const token_query = `UPDATE login SET token ="${jwtToken}"`;
-            await db.run(token_query);
-            res.send({ url: "/todo.html" });
+            res.cookie("jwt_token", jwtToken, {
+                httpOnly: true,
+                secure: true,
+                maxAge: 24 * 60 * 60 * 1000,
+            });
+
+            res.send({ url: "todo.html" });
 
         }
         else {
@@ -92,93 +124,96 @@ app.post("/login", async (req, res) => {
 
 });
 
-//token path
-app.get("/token",async(req,res)=>{
-let query=`SELECT * FROM login`;
-let login_data=await db.get(query);
-    res.send({token:`${login_data.token}`})
-});
+
 
 //all todos path
 app.get("/todos", validation_middleware, async (req, res) => {
-    const query = `SELECT * FROM todoList`;
-    const todos = await db.all(query);
+   const role=req.role;
+   if (role!=="admin"){
+    const id = req.id;
+    const query = `SELECT * FROM todoList WHERE user_id=?`;
+    const todos = await db.all(query,[id]);
     res.send(todos);
+   }
+    else{
+    const usersList=await db.all(`select * from todoList`);
+    res.send(usersList);
+   }
+  
 });
 
 
 //get todo by id 
 app.get("/todo/:todoId", validation_middleware, async (req, res) => {
-    let {todoId}=req.params;
+    let { todoId } = req.params;
     const query = `SELECT * FROM todoList WHERE id=${todoId}`;
     const todo = await db.get(query);
     res.send(todo);
 });
 
 //add todo path
-app.post("/create",validation_middleware,async(req,res)=>{
-    let todos =await db.all(`SELECT * FROM todoList`);
-    let id=todos.length;
-    if (id===0){
-        id=1;
-    }
-    else{
-        id+=1;
-    }
-
-    let {title,description,due_date,status}=req.body;
-    const query=`INSERT INTO todoList(id,title,description,due_date,status) VALUES(${id},"${title}","${description}","${due_date}","${status}")`;
-    await db.run(query);
-    res.send({message:"created"});
+app.post("/create", validation_middleware, async (req, res) => {
+   let todos = await db.all(`SELECT * FROM todoList`);
+    const id=req.id;
+    const { title, description, due_date ,status} = req.body;
+    
+    const query = `INSERT INTO todoList(user_id,title,description,due_date,status) VALUES(?,?,?,?,?)`;
+    await db.run(query,[id,title,description,due_date,status]);
+    res.send({ message: "created" });
 
 });
 
 //todo update path
-app.put("/todo/:todoId", validation_middleware, async(req, res) => {
+app.put("/todo/:todoId", validation_middleware, async (req, res) => {
+    if (req.user==="user"){
     const { todoId } = req.params;
     const { title, description, due_date, status } = req.body;
-    const query = `UPDATE todoList SET title="${title}",
-    description="${description}",
-    due_date="${due_date}"
+    const query = `UPDATE todoList SET title=?,
+    description=?,
+    due_date=?
     WHERE
-    id=${todoId}`;
-    await db.run(query);
-    res.send({message:"updated"});
+    id=?`;
+    await db.run(query,[title,description,due_date,todoId]);
+    res.send({ message: "updated" });}
+    else{
+        res.send("")
+    }
+
 });
 
 
 //todo status change
-app.put("/status/:todoId", validation_middleware, async(req, res) => {
+app.put("/status/:todoId", validation_middleware, async (req, res) => {
     const { todoId } = req.params;
-    const {status} = req.body;
-    console.log(req.body)
-    const query = `UPDATE todoList SET status="${status}"
+    const { status } = req.body;
+    const query = `UPDATE todoList SET status=?
     WHERE
-    id=${todoId}`;
-    await db.run(query);
-    res.send({message:"updated"});
+    id=?`;
+    await db.run(query,[status,todoId]);
+    res.send({ message: "updated" });
 });
 
 //todo delete path
-app.delete("/todo/:todoId", validation_middleware, async(req, res) => {
+app.delete("/todo/:todoId", validation_middleware, async (req, res) => {
     const { todoId } = req.params;
-    const query = `DELETE FROM todoList WHERE id=${todoId}`;
-    await db.run(query);
-    res.send({message:"deleted"});
+    const query = `DELETE FROM todoList WHERE id=?`;
+    await db.run(query,[todoId]);
+    res.send({ message: "deleted" });
 });
 
 //todos by status path
 app.get("/todos/:status", validation_middleware, async (req, res) => {
-    let {status}=req.params;
-    const query = `SELECT * FROM todoList WHERE status="${status}"`;
-    const todos = await db.all(query);
+    let { status } = req.params;
+    const query = `SELECT * FROM todoList WHERE status=?`;
+    const todos = await db.all(query,[status]);
     res.send(todos);
 });
 
 //todo by title
 app.get("/title/:title", validation_middleware, async (req, res) => {
-    let {title}=req.params;
-    const query = `SELECT * FROM todoList WHERE title LIKE "%${title}%"`;
-    const todos = await db.all(query);
+    let { title } = req.params;
+    const query = `SELECT * FROM todoList WHERE title LIKE "%?%"`;
+    const todos = await db.all(query,[title]);
     res.send(todos);
 });
+

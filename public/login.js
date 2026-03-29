@@ -26,6 +26,7 @@ submitElement.addEventListener("click", async (event) => {
 
         let response = await fetch("/login", options);
         let json_data = await response.json();
+        
         if (json_data.message === "invalid user_name") {
             nameError.classList.add("display");
         }

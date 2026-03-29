@@ -6,17 +6,6 @@ const titleRequired = document.getElementById("title_required");
 const dateRequired = document.getElementById("date_required");
 
 
-let token = null;
-
-//access token 
-const getToken = async () => {
-  let response = await fetch("/token", { method: "GET" });
-  let jsondata = await response.json();
-  token = jsondata.token;
-}
-
-getToken();
-
 //add task to database
 const addTask = async () => {
 
@@ -24,18 +13,17 @@ const addTask = async () => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      authorization: token,
     },
     body: JSON.stringify({
-      title: `${title.value}`,
-      description: `${description.value}`,
+      title: title.value,
+      description: description.value,
       due_date: dueDate.value,
       status: "false"
     }),
   };
   let response = await fetch("/create", options);
   let jsondata = await response.json();
-  console.log(jsondata);
+  
   document.getElementById('task-title').value = '';
   document.getElementById('task-desc').value = '';
   document.getElementById('task-due').value = '';
@@ -59,7 +47,7 @@ addTaskBtn.addEventListener("click", () => {
   else {
     dateRequired.classList.remove("display");
   }
-  if (title.value && dueDate.value !== "") {
+  if (title.value!=="" && dueDate.value !== "") {
     addTask();
   }
 });
@@ -68,17 +56,8 @@ addTaskBtn.addEventListener("click", () => {
 //render tasks from db
 const renderTasks = async () => {
 
-  let res = await fetch("/token", { method: "GET" });
-  let json = await res.json();
-  let token = json.token;
-
   let response = await fetch("/todos", {
     method: "GET",
-    headers: {
-      "content-type": "application/json",
-      authorization: token,
-    }
-
   });
   let tasks = await response.json();
   createTask(tasks);
@@ -132,7 +111,7 @@ const status_change_in_db = async (id) => {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      authorization: token,
+     
     },
     body: JSON.stringify({ status: `${db_status_value}` }),
   });
@@ -153,7 +132,6 @@ const edittask_from_db = async (id) => {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      authorization: token,
     },
     body: JSON.stringify({
       id: `${task_id}`,
@@ -165,7 +143,6 @@ const edittask_from_db = async (id) => {
   });
   let jsondata = await response.json();
 
-  console.log(jsondata)
 }
 
 //get task details to edit
@@ -173,9 +150,7 @@ const get_task_by_id_from_db = async (id) => {
   const todo_id = id;
   let response = await fetch(`/todo/${todo_id}`, {
     method: "GET",
-    headers: {
-      authorization: token
-    }
+   
   });
   let jsondata = await response.json();
   title.value = jsondata.title;
@@ -200,9 +175,6 @@ const deletetask_from_db = async (id) => {
   const task_id = id;
   let response = await fetch(`/todo/${task_id}`, {
     method: "DELETE",
-    headers: {
-      authorization: token,
-    },
   })
   let jsondata = await response.json();
   console.log(jsondata);
@@ -220,10 +192,7 @@ const task_by_status = async (status) => {
 
   let response = await fetch(`/todos/${status}`, {
     method: "GET",
-    headers: {
-      "content-type": "application/json",
-      authorization: token,
-    }
+   
   });
   let tasks = await response.json();
   console.log(tasks)
@@ -256,10 +225,7 @@ const search_task = async () => {
 
   let response = await fetch(`/title/${search.value}`, {
     method: "GET",
-    headers: {
-      "content-type": "application/json",
-      authorization: token,
-    }
+   
   });
   let tasks = await response.json();
   console.log(tasks)
